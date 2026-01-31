@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
-import { loadStripe } from '@stripe/stripe-js'
 import { ChevronRight, Lock, CreditCard, Truck, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,8 +19,6 @@ import {
 import { useCartStore } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' },
@@ -185,18 +182,11 @@ export default function CheckoutPage() {
       }
 
       // Redirect to Stripe Checkout
-      const stripe = await stripePromise
-      if (stripe && data.sessionId) {
-        clearCart()
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId,
-        })
-        if (error) {
-          throw error
-        }
-      } else if (data.url) {
+      if (data.url) {
         clearCart()
         window.location.href = data.url
+      } else {
+        throw new Error('No checkout URL received')
       }
     } catch (error) {
       console.error('Checkout error:', error)

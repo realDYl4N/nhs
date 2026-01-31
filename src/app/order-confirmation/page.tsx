@@ -16,6 +16,7 @@ interface OrderConfirmationPageProps {
   searchParams: Promise<{
     orderId?: string
     session_id?: string
+    demo?: string
   }>
 }
 
@@ -35,7 +36,8 @@ export default async function OrderConfirmationPage({
   searchParams,
 }: OrderConfirmationPageProps) {
   const params = await searchParams
-  const { orderId } = params
+  const { orderId, demo } = params
+  const isDemo = demo === 'true'
 
   if (!orderId) {
     notFound()
@@ -50,13 +52,23 @@ export default async function OrderConfirmationPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto text-center">
+        {/* Demo Banner */}
+        {isDemo ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-amber-800 font-medium">Demo Mode</p>
+            <p className="text-amber-700 text-sm">
+              This is a demo order. No payment was processed and no products will be shipped.
+            </p>
+          </div>
+        ) : null}
+
         {/* Success Icon */}
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Thank You for Your Order!
+          {isDemo ? 'Demo Order Placed!' : 'Thank You for Your Order!'}
         </h1>
         <p className="text-gray-600 mb-8">
           Your order has been received and is being processed. We&apos;ll send you

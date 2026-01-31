@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { stripe, formatAmountForStripe } from '@/lib/stripe'
+import { stripe, formatAmountForStripe, isStripeEnabled } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { getAuthSession } from '@/lib/auth'
 
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session?.user?.id || null,
         email,
-        status: 'pending',
-        paymentStatus: 'pending',
+        status: isStripeEnabled ? 'pending' : 'confirmed',
+        paymentStatus: isStripeEnabled ? 'pending' : 'demo',
         subtotal,
         shipping,
         tax,
@@ -104,6 +104,23 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Demo mode: skip Stripe and redirect to confirmation
+    if (!isStripeEnabled || !stripe) {
+      // Update stock for demo orders
+      for (const item of items) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        })
+      }
+
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      return NextResponse.json({
+        url: `${siteUrl}/order-confirmation?orderId=${order.id}&demo=true`,
+        demo: true,
+      })
+    }
 
     // Add shipping as line item if applicable
     if (shipping > 0) {

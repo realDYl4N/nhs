@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
-import { stripe } from '@/lib/stripe'
+import { stripe, isStripeEnabled } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { sendEmail, getOrderConfirmationEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
+  // In demo mode, webhooks are not used
+  if (!isStripeEnabled || !stripe) {
+    return NextResponse.json({ message: 'Webhooks disabled in demo mode' }, { status: 200 })
+  }
+
   const body = await request.text()
   const headersList = await headers()
   const signature = headersList.get('stripe-signature')

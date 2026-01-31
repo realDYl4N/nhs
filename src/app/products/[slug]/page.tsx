@@ -81,7 +81,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const images = JSON.parse(product.images || '[]') as string[]
   const benefits = JSON.parse(product.benefits || '[]') as { title: string; description: string }[]
   const ingredients = JSON.parse(product.ingredients || '[]') as { name: string; amount: string; description?: string }[]
-  const supplementFacts = JSON.parse(product.supplementFacts || '{}') as Record<string, unknown>
+  const supplementFacts = JSON.parse(product.supplementFacts || '{}') as {
+    servingSize?: string
+    servingsPerContainer?: string
+    nutrients?: { name: string; amount: string; dailyValue?: string }[]
+  }
   const stockStatus = getStockStatus(product.stock)
 
   const avgRating = product.reviews.length
@@ -286,28 +290,26 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <CardTitle>Supplement Facts</CardTitle>
             </CardHeader>
             <CardContent>
-              {supplementFacts.servingSize && (
+              {supplementFacts.servingSize ? (
                 <div className="mb-4 pb-4 border-b">
-                  <p className="text-sm"><strong>Serving Size:</strong> {supplementFacts.servingSize as string}</p>
-                  {supplementFacts.servingsPerContainer && (
-                    <p className="text-sm"><strong>Servings Per Container:</strong> {supplementFacts.servingsPerContainer as string}</p>
-                  )}
+                  <p className="text-sm"><strong>Serving Size:</strong> {supplementFacts.servingSize}</p>
+                  {supplementFacts.servingsPerContainer ? (
+                    <p className="text-sm"><strong>Servings Per Container:</strong> {supplementFacts.servingsPerContainer}</p>
+                  ) : null}
                 </div>
-              )}
+              ) : null}
               <div className="space-y-2">
-                {supplementFacts.nutrients && Array.isArray(supplementFacts.nutrients) && (
-                  supplementFacts.nutrients.map((nutrient: { name: string; amount: string; dailyValue?: string }, index: number) => (
-                    <div key={index} className="flex justify-between py-2 border-b last:border-0">
-                      <span className="text-gray-900">{nutrient.name}</span>
-                      <div className="text-right">
-                        <span className="font-medium">{nutrient.amount}</span>
-                        {nutrient.dailyValue && (
-                          <span className="text-gray-500 ml-2">{nutrient.dailyValue}</span>
-                        )}
-                      </div>
+                {supplementFacts.nutrients?.map((nutrient, index) => (
+                  <div key={index} className="flex justify-between py-2 border-b last:border-0">
+                    <span className="text-gray-900">{nutrient.name}</span>
+                    <div className="text-right">
+                      <span className="font-medium">{nutrient.amount}</span>
+                      {nutrient.dailyValue ? (
+                        <span className="text-gray-500 ml-2">{nutrient.dailyValue}</span>
+                      ) : null}
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
